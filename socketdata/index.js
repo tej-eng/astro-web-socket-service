@@ -1,14 +1,7 @@
-import { insertData } from "../chatapi/messageService.js";
-import { chatReject } from "../chatapi/chatReject.js";
-import { autoChat,changeAutoChatStatus } from "../chatapi/autoChat.js";
-import { comChat } from "../chatapi/comChat.js";
 import { DateTime } from "luxon";
-import { insert_message } from "../controller/InsertMessage.js";
 import sanitizeHtml from "sanitize-html";
 
 // ===== Utility Functions =====
-const algorithm = "aes-256-cbc";
-const key = Buffer.from(process.env.ENCRYPTION_KEY, "hex");
 
 const users = [];
 const requestCooldown = 1000;
@@ -88,7 +81,7 @@ const redisHandlers = (io) => ({
 
   customer_recharge: (data) => io.to(data.roomId).emit("open_popup_astrologer", data),
 
-  customer_recharge_complted: (data) => io.to(data.roomId).emit("recharge_complted", data),
+  customer_recharge_completed: (data) => io.to(data.roomId).emit("recharge_complted", data),
 
   customer_recharge_fail: (data) => io.to(data.roomId).emit("customer_recharge_fail", data),
 });
@@ -106,7 +99,7 @@ async function socketHandler(io, pubClient, subClient) {
       "user_disconnected",
       "chat_reject_auto",
       "customer_recharge",
-      "customer_recharge_complted",
+      "customer_recharge_completed",
       "customer_recharge_fail",
     ];
 
@@ -174,16 +167,7 @@ async function socketHandler(io, pubClient, subClient) {
             let sender =  "Astrologer";
             logEvent("send_message", data);
             const time = DateTime.now().setZone("Asia/Kolkata").toFormat("hh:mm:ss a");
-            // await insert_message({
-            //   sender_id: data.sender_id,
-            //   received_id: data.received_id,
-            //   message: data.message,
-            //   image: data.image,
-            //   msg_id: data.msg_id,
-            //   room_id: data.room_id,
-            //   sender:sender,
-            //   replyTo: data.replyTo || null,
-            // });
+            
             publish(pubClient, "messages", {
               ...data,
               time,

@@ -4,31 +4,48 @@ import { Server } from "socket.io";
 import { createClient } from "redis";
 import { createAdapter } from "@socket.io/redis-adapter";
 import cors from "cors";
-import Routes from "./routes/index.js";
 import socketHandler from "./socketdata/index.js";
 import swaggerUi from "swagger-ui-express";
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
-import { createOrder } from "./controller/createPayment.js";
-import { verifyPayment } from "./controller/verifyPayment.js";
+import fs from "fs/promises";
 import path from "path";
+import cookie from "cookie";
 
 dotenv.config();
 
+const FRONTEND_URL = "https://dhwaniastro.com";
+
 const app = express();
-const port = process.env.PORT;
+const port = process.env.PORT ;
 const server = createServer(app);
 
+/* ==============================
+   CORS
+============================== */
+app.use(cors({
+  origin: FRONTEND_URL,
+  credentials: true
+}));
+
+/* ==============================
+   SOCKET.IO CONFIG
+============================== */
 const io = new Server(server, {
+  path: "/socket.io",
   cors: {
-    origin: "*", // Ideally replace "*" with your frontend domain for security
-    methods: ["GET", "POST"],
-  },
+    origin: FRONTEND_URL,
+    credentials: true
+  }
 });
 
-// Redis connections
+/* ==============================
+   REDIS CONFIG
+============================== */
+
+// Pub/Sub (Socket.IO Adapter)
 const pubClient = createClient({
-  username: process.env.REDIS_USERNAME || "default",
+  username: process.env.REDIS_USERNAME,
   password: process.env.REDIS_PASSWORD,
   socket: {
     host: process.env.REDIS_HOST,
@@ -38,66 +55,95 @@ const pubClient = createClient({
 
 const subClient = pubClient.duplicate();
 
+//  MAIN Redis Client 
+const redisClient = createClient({
+  username: process.env.REDIS_USERNAME,
+  password: process.env.REDIS_PASSWORD,
+  socket: {
+    host: process.env.REDIS_HOST,
+    port: Number(process.env.REDIS_PORT),
+  },
+});
+
+//  Connect all
 await pubClient.connect();
 await subClient.connect();
-
+await redisClient.connect();
+console.log(" Redis Pub/Sub Connected");
 io.adapter(createAdapter(pubClient, subClient));
-
-
-/**
- * JWT authentication middleware for Socket.IO
- */
+/* ==============================
+   JWT AUTH MIDDLEWARE
+============================== */
 const jwtAuthMiddleware = (socket, next) => {
-  console.log("JWT Auth Middleware Invoked");
-  const token =
-    socket.handshake.auth?.token ||
-    socket.handshake.query?.token ||
-    socket.handshake.headers?.authorization?.split(" ")[1];
+  try {
+    const cookieHeader = socket.handshake.headers.cookie;
 
-  if (!token) {
-    return next(new Error("Authentication error: Token missing"));
-  }
+    if (!cookieHeader) {
+      return next(new Error("Authentication error: No cookies found"));
+    }
 
-  jwt.verify(
-    token,
-    process.env.JWT_SECRET ,
-    (err, decoded) => {
+    const cookies = cookie.parse(cookieHeader);
+    const token = cookies.accessToken;
+
+    if (!token) {
+      return next(new Error("Authentication error: Token missing"));
+    }
+
+    jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
       if (err) {
-	      console.log("decoded-------------:",decoded);
         return next(new Error("Authentication error: Invalid token"));
       }
+
       socket.user = decoded;
       next();
-    }
-  );
+    });
+
+  } catch (err) {
+    next(new Error("Authentication error"));
+  }
 };
 
-// Namespace for astrologer chat with JWT authentication
+/* ==============================
+   NAMESPACE
+============================== */
 const dhwaniNamespace = io.of("/dhwani-astro");
 dhwaniNamespace.use(jwtAuthMiddleware);
 
-// Attach your socket handlers here
-socketHandler(dhwaniNamespace, pubClient, subClient);
+//  PASS redisClient here (IMPORTANT FIX)
+socketHandler(dhwaniNamespace, pubClient, subClient, redisClient);
+
+/* ==============================
+   EXPRESS ROUTES
+============================== */
+
 app.use("/uploads", express.static(process.env.UPLOADS_DIR));
-//app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(cors());
 
-// Routes
-app.use(Routes);
-
-// Payment APIs
-//app.post("/api/create-order", createOrder);
-//app.post("/api/verify-Payment", verifyPayment);
-
-// Root endpoint
 app.get("/", (req, res) => {
-  res.send("Welcome to the Chat Application");
+  res.send("Chat Service Running ");
 });
 
-// Start server
+// Logs API
+// app.get("/api/logs", async (req, res) => {
+//   try {
+//     const logFile = path.join(process.cwd(), "logs", "log.txt");
+//     const logs = await fs.readFile(logFile, "utf8");
+//     res.type("text/plain").send(logs);
+//   } catch (err) {
+//     if (err.code === "ENOENT") {
+//       res.status(404).json({ error: "Log file not found" });
+//     } else {
+//       console.error(err);
+//       res.status(500).json({ error: "Failed to read logs" });
+//     }
+//   }
+// });
+
+/* ==============================
+   START SERVER
+============================== */
 server.listen(port, () => {
-  console.log(`Server started on port ${port}`);
+  console.log(`Socket Server running on port ${port}`);
 });

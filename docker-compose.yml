@@ -1,0 +1,16 @@
+services:
+  astro-websocket-service-v2:
+    build: .
+    container_name: astro-websocket-service-v2
+    restart: always
+    env_file:
+      - .env   
+    ports:
+      - "8006:8006"
+    networks:
+      - dhwaniastro-net
+
+networks:
+  dhwaniastro-net:
+    external: true
+
