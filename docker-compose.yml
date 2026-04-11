@@ -3,14 +3,32 @@ services:
     build: .
     container_name: astro-websocket-service-v2
     restart: always
+
     env_file:
-      - .env   
+      - .env
+
     ports:
       - "8006:8006"
+
     networks:
       - dhwaniastro-net
+
+    #  MEMORY LIMIT (50MB HARD LIMIT)
+    mem_limit: 50m
+    memswap_limit: 50m   # prevent swap overuse
+
+    # AUTO RESTART ON CRASH (INCLUDING OOM)
+    deploy:
+      restart_policy:
+        condition: on-failure
+
+    # OPTIONAL (better stability)
+    ulimits:
+      nproc: 65535
+      nofile:
+        soft: 20000
+        hard: 40000
 
 networks:
   dhwaniastro-net:
     external: true
-
