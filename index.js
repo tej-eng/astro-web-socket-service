@@ -84,6 +84,7 @@ const jwtAuthMiddleware = (socket, next) => {
 
     const cookies = cookie.parse(cookieHeader);
     const token = cookies.accessToken;
+    console.log("JWT Token from cookies:", token);
 
     if (!token) {
       return next(new Error("Authentication error: Token missing"));
