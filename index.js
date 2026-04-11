@@ -76,6 +76,7 @@ io.adapter(createAdapter(pubClient, subClient));
 ============================== */
 const jwtAuthMiddleware = (socket, next) => {
   try {
+    console.log("Socket handshake headers:", socket.handshake.headers);
     const cookieHeader = socket.handshake.headers.cookie;
 
     if (!cookieHeader) {
