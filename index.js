@@ -76,7 +76,6 @@ io.adapter(createAdapter(pubClient, subClient));
 ============================== */
 const jwtAuthMiddleware = (socket, next) => {
   try {
-    console.log("Socket handshake headers:", socket.handshake.headers);
     const cookieHeader = socket.handshake.headers.cookie;
 
     if (!cookieHeader) {
@@ -85,7 +84,6 @@ const jwtAuthMiddleware = (socket, next) => {
 
     const cookies = cookie.parse(cookieHeader);
     const token = cookies.accessToken;
-    console.log("JWT Token from cookies:", token);
 
     if (!token) {
       return next(new Error("Authentication error: Token missing"));
