@@ -221,7 +221,7 @@ async function socketHandler(io, pubClient, subClient) {
             socket.broadcast.to(data.room_id).emit("complted_chat", { message: `User has left the ${data.room_id} chat.`, roomId: data.room_id, status: "leave" });
             socket.emit("complted_chat", { message: `You have left the ${data.room_id} chat.`, roomId: data.room_id, status: "leave" });
             socket.leave(data.room_id);
-            publish(pubClient, "end_chat_by_astrologer", { message: `User has left the ${data.room_id} chat.`, roomId: data.room_id, status: "leave" });
+            publish(pubClient, "end_chat_by_astrologer", { message: `User has left the ${data.room_id} chat.`, roomId: data.room_id,astroId:data.astroId, status: "leave" });
           } catch (err) {
             console.error("[Socket Error] complted_chat", err);
           }
