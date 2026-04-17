@@ -43,7 +43,7 @@ const redisHandlers = (io) => ({
   },
 
   chat_cancel_by_user: (data) => {
-      io.emit("chat_rejected_astrologer", {
+      io.emit("chat_cancel_by_user", {
         message: `${data.message} `,
         status: "rejected",
         roomid: String(data.roomId),
