@@ -42,6 +42,16 @@ const redisHandlers = (io) => ({
     }
   },
 
+  chat_cancel_by_user: (data) => {
+      io.emit("chat_rejected_astrologer", {
+        message: `${data.message} `,
+        status: "rejected",
+        roomid: String(data.roomId),
+      });
+    
+  },
+  
+
   messages: (data) => {
    
     const parseData = typeof data === "string" ? JSON.parse(data) : data;
@@ -101,6 +111,7 @@ async function socketHandler(io, pubClient, subClient) {
       "customer_recharge",
       "customer_recharge_completed",
       "customer_recharge_fail",
+      "chat_cancel_by_user",
     ];
 
     const handlers = redisHandlers(io);
