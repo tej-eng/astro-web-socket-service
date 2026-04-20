@@ -52,6 +52,7 @@ const redisHandlers = (io) => ({
   },
   
 
+
   messages: (data) => {
    
     const parseData = typeof data === "string" ? JSON.parse(data) : data;
@@ -59,7 +60,7 @@ const redisHandlers = (io) => ({
       io.to(parseData.room_id).emit("receive_message", parseData);
     } else if (parseData.sender === "Astrologer") {
       console.log("[messages handler] Emitting to room (Astrologer):", parseData.room_id);
-     io.to(data.room_id).emit("receive_message", data);
+     //io.to(data.room_id).emit("receive_message", data);
     } else {
       console.log("[messages handler] Unknown sender:", parseData.sender);
     }
