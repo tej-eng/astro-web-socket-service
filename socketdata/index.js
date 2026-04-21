@@ -57,7 +57,7 @@ const redisHandlers = (io) => ({
    
     const parseData = typeof data === "string" ? JSON.parse(data) : data;
     if (parseData.sender == "user") {
-      console.log("[messages handler] Emitting to room (User)aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa:");  
+      console.log("[messages handler] Emitting to room (User)aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa:",parseData.room_id);  
       io.to(parseData.room_id).emit("receive_message", parseData);
     } else if (parseData.sender === "Astrologer") {
       console.log("[messages handler] Emitting to room (Astrologer):", parseData.room_id);
