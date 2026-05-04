@@ -59,7 +59,7 @@ const redisHandlers = (io) => ({
     },
       
   offer: (data) => {
-      io.emit("offer", JSON.stringify(data));
+    io.to(data.room_id).emit("offer", data);
     
   },
   call_ended_by_user: (data) => {
@@ -309,6 +309,9 @@ async function socketHandler(io, pubClient, subClient) {
             console.error("[Socket Error] disconnect", err);
           }
         });
+
+      
+        
       } catch (err) {
         console.error("[Connection Error]", err);
       }
