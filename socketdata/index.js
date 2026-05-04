@@ -50,6 +50,22 @@ const redisHandlers = (io) => ({
       });
     
   },
+  call_start: (data) => {
+      io.emit("incoming_call", {
+        room_id: data.room_id,
+        callerId:data.callerId,
+        receiverId: data.receiverId,
+      });
+    },
+      
+  offer: (data) => {
+      io.emit("offer", JSON.stringify(data));
+    
+  },
+  call_ended_by_user: (data) => {
+      io.emit("call_ended_by_user", JSON.stringify(data));
+    
+  },
   
 
 
@@ -114,6 +130,9 @@ async function socketHandler(io, pubClient, subClient) {
       "customer_recharge_completed",
       "customer_recharge_fail",
       "chat_cancel_by_user",
+      "call_start",
+      "offer",
+      "call_ended_by_user",
     ];
 
     const handlers = redisHandlers(io);
@@ -263,6 +282,31 @@ async function socketHandler(io, pubClient, subClient) {
             publish(pubClient, "logout", { message: "Astrologer has left the chat.", roomid: roomBase });
           } catch (err) {
             console.error("[Socket Error] logout", err);
+          }
+        });
+
+        //---------------for call-------
+
+        socket.on("callAcceptedByAtrologer", async (data) => {
+          try {
+            publish(pubClient, "callAcceptedByAtrologer", JSON.stringify(data));
+          } catch (err) {
+            console.error("[Socket Error] disconnect", err);
+          }
+        });
+
+         socket.on("answer", async (data) => {
+          try {
+            publish(pubClient, "answer", JSON.stringify(data));
+          } catch (err) {
+            console.error("[Socket Error] disconnect", err);
+          }
+        });
+         socket.on("call_ended_by_astrologer", async (data) => {
+          try {
+            publish(pubClient, "call_ended_by_astrologer", JSON.stringify(data));
+          } catch (err) {
+            console.error("[Socket Error] disconnect", err);
           }
         });
       } catch (err) {
