@@ -289,7 +289,7 @@ async function socketHandler(io, pubClient, subClient) {
 
         socket.on("callAcceptedByAtrologer", async (data) => {
           try {
-            publish(pubClient, "callAcceptedByAtrologer", JSON.stringify(data));
+            publish(pubClient, "callAcceptedByAtrologer", data);
           } catch (err) {
             console.error("[Socket Error] disconnect", err);
           }
