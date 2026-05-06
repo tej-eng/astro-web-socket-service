@@ -59,8 +59,8 @@ const redisHandlers = (io) => ({
     },
       
   offer: (data) => {
-    console.log("[offer handler] Emitting offer to room:", data.room_id, data);
-    io.to(data.room_id).emit("offer", data);
+   console.log("Connected sockets in room:", data.room_id, 
+  io.sockets.adapter.rooms.get(data.room_id));
     
   },
   call_ended_by_user: (data) => {
