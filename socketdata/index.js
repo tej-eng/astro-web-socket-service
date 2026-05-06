@@ -287,9 +287,9 @@ async function socketHandler(io, pubClient, subClient) {
 
         //---------------for call-------
 
-        socket.on("callAcceptedByAtrologer", async (data) => {
+        socket.on("callAcceptedByAstrologer", async (data) => {
           try {
-            publish(pubClient, "callAcceptedByAtrologer", JSON.stringify(data));
+            publish(pubClient, "callAcceptedByAstrologer", JSON.stringify(data));
           } catch (err) {
             console.error("[Socket Error] disconnect", err);
           }
