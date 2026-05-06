@@ -67,8 +67,8 @@ const redisHandlers = (io) => ({
     
   },
   peer_joined: (data) => {
-      io.emit("peer_joined", JSON.stringify(data));
-  },
+  io.to(data.roomId).emit("peer_joined", data);
+},
 
   
   
