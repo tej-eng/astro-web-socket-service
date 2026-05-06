@@ -59,6 +59,7 @@ const redisHandlers = (io) => ({
     },
       
   offer: (data) => {
+    console.log("[offer handler] Emitting offer to room:", data.room_id, data);
     io.to(data.room_id).emit("offer", data);
     
   },
