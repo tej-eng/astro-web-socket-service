@@ -21,8 +21,8 @@ function publish(pubClient, channel, payload) {
 }
 
 function logEvent(event, data) {
-   const ts = DateTime.now().toFormat("yyyy-MM-dd HH:mm:ss");
-  console.log(`[${ts}][${event}]`,data);
+  const ts = DateTime.now().toFormat("yyyy-MM-dd HH:mm:ss");
+  console.log(`[${ts}][${event}]`, data);
 }
 // ===== Redis Channel Handlers =====
 const redisHandlers = (io) => ({
@@ -43,68 +43,82 @@ const redisHandlers = (io) => ({
   },
 
   chat_cancel_by_user: (data) => {
-      io.emit("chat_cancel_by_user", {
-        message: `${data.message} `,
-        status: "rejected",
-        roomid: String(data.roomId),
-      });
-    
+    io.emit("chat_cancel_by_user", {
+      message: `${data.message} `,
+      status: "rejected",
+      roomid: String(data.roomId),
+    });
   },
   call_start: (data) => {
-      io.emit("incoming_call", {
-        room_id: data.room_id,
-        callerId:data.callerId,
-        receiverId: data.receiverId,
-      });
-    },
-      
-  offer: (data) => {
-   console.log("Connected sockets in room:", data.room_id, 
-  io.sockets.adapter.rooms.get(data.room_id));
-    
+    io.emit("incoming_call", {
+      room_id: data.room_id,
+      callerId: data.callerId,
+      receiverId: data.receiverId,
+    });
   },
+
+ offer: (data) => {
+  console.log(
+    "📤 Relaying OFFER to room:",
+    data.room_id,
+  );
+
+  io.to(data.room_id).emit("offer", data);
+},
   call_ended_by_user: (data) => {
-      io.emit("call_ended_by_user", JSON.stringify(data));
-    
+    io.emit("call_ended_by_user", JSON.stringify(data));
   },
   join_call: (data) => {
-  io.to(data.roomId).emit("join_call", data);
-},
+    io.to(data.roomId).emit("join_call", data);
+  },
   peer_joined: (data) => {
-  io.to(data.roomId).emit("peer_joined", data);
-},
-
-  
-  
-
+    io.to(data.roomId).emit("peer_joined", data);
+  },
 
   messages: (data) => {
-   
     const parseData = typeof data === "string" ? JSON.parse(data) : data;
     if (parseData.sender == "user") {
-      console.log("[messages handler] Emitting to room (User)aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa:",parseData.room_id);  
+      console.log(
+        "[messages handler] Emitting to room (User)aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa:",
+        parseData.room_id,
+      );
       io.to(parseData.room_id).emit("receive_message", parseData);
     } else if (parseData.sender === "Astrologer") {
-      console.log("[messages handler] Emitting to room (Astrologer):", parseData.room_id);
-     //io.to(data.room_id).emit("receive_message", data);
+      console.log(
+        "[messages handler] Emitting to room (Astrologer):",
+        parseData.room_id,
+      );
+      //io.to(data.room_id).emit("receive_message", data);
     } else {
       console.log("[messages handler] Unknown sender:", parseData.sender);
     }
   },
 
   room_notification: (data) => {
-    console.log("[room_notification handler] Emitting to room:", data.roomid, data);
+    console.log(
+      "[room_notification handler] Emitting to room:",
+      data.roomid,
+      data,
+    );
     io.to(data.roomid).emit("roomNotification", data);
   },
-   userJoinedChat: (data) => {
-    console.log("[userJoinedChat handler] Emitting to room:", data.roomid, data);
+  userJoinedChat: (data) => {
+    console.log(
+      "[userJoinedChat handler] Emitting to room:",
+      data.roomid,
+      data,
+    );
     //io.to(data.roomid).emit("roomNotification", data);
     io.emit("chat_started_astrologer", data);
     io.emit("user_conformation_chat", data);
   },
- 
+
   user_typing: (data) => {
-    console.log("[user_typing handler] Emitting typing to room:", data.roomid, data);
+    console.log(
+      "[user_typing handler] Emitting typing to room:",
+      data.roomid,
+      data,
+    );
     io.to(data.roomid).emit("typing", data);
   },
 
@@ -113,37 +127,48 @@ const redisHandlers = (io) => ({
     io.to(data.roomId).emit("complted_chat", data);
   },
 
-  user_disconnected: (data) => io.to(data.roomId).emit("user_disconnected", data),
+  user_disconnected: (data) =>
+    io.to(data.roomId).emit("user_disconnected", data),
   chat_reject_auto: (data) => io.to(data.roomId).emit("chat_reject_auto", data),
 
-  customer_recharge: (data) => io.to(data.roomId).emit("open_popup_astrologer", data),
+  customer_recharge: (data) =>
+    io.to(data.roomId).emit("open_popup_astrologer", data),
 
-  customer_recharge_completed: (data) => io.to(data.roomId).emit("recharge_complted", data),
+  customer_recharge_completed: (data) =>
+    io.to(data.roomId).emit("recharge_complted", data),
 
-  customer_recharge_fail: (data) => io.to(data.roomId).emit("customer_recharge_fail", data),
+  customer_recharge_fail: (data) =>
+    io.to(data.roomId).emit("customer_recharge_fail", data),
 });
 
 // ===== Main Socket Handler =====
 async function socketHandler(io, pubClient, subClient) {
   try {
     const channels = [
-      "chat_requests",
-      "chat_status",
-      "userJoinedChat",
-      "messages",
-      "user_typing",
-      "end_chat_by_user",
-      "user_disconnected",
-      "chat_reject_auto",
-      "customer_recharge",
-      "customer_recharge_completed",
-      "customer_recharge_fail",
-      "chat_cancel_by_user",
-      "call_start",
-      "offer",
-      "call_ended_by_user",
-      "peer_joined",
-      "join_call"
+     "chat_requests",
+  "chat_status",
+  "userJoinedChat",
+  "messages",
+  "user_typing",
+  "end_chat_by_user",
+  "user_disconnected",
+  "chat_reject_auto",
+  "customer_recharge",
+  "customer_recharge_completed",
+  "customer_recharge_fail",
+  "chat_cancel_by_user",
+
+  // CALL
+  "call_start",
+  "callAcceptedByAstrologer",
+  "offer",
+  "answer",
+  "ice-candidate",
+  "call_ended_by_user",
+  "call_ended_by_astrologer",
+  "peer_joined",
+  "join_call",
+
     ];
 
     const handlers = redisHandlers(io);
@@ -207,10 +232,12 @@ async function socketHandler(io, pubClient, subClient) {
         // Send message
         socket.on("send_message", async (data) => {
           try {
-            let sender =  "Astrologer";
+            let sender = "Astrologer";
             logEvent("send_message", data);
-            const time = DateTime.now().setZone("Asia/Kolkata").toFormat("hh:mm:ss a");
-            
+            const time = DateTime.now()
+              .setZone("Asia/Kolkata")
+              .toFormat("hh:mm:ss a");
+
             publish(pubClient, "messages", {
               ...data,
               time,
@@ -260,24 +287,48 @@ async function socketHandler(io, pubClient, subClient) {
         socket.on("complted_chat", async (data) => {
           try {
             logEvent("complted_chat", data);
-           // await comChat({ roomId: data.room_id });
-            socket.broadcast.to(data.room_id).emit("complted_chat", { message: `User has left the ${data.room_id} chat.`, roomId: data.room_id, status: "leave" });
-            socket.emit("complted_chat", { message: `You have left the ${data.room_id} chat.`, roomId: data.room_id, status: "leave" });
+            // await comChat({ roomId: data.room_id });
+            socket.broadcast
+              .to(data.room_id)
+              .emit("complted_chat", {
+                message: `User has left the ${data.room_id} chat.`,
+                roomId: data.room_id,
+                status: "leave",
+              });
+            socket.emit("complted_chat", {
+              message: `You have left the ${data.room_id} chat.`,
+              roomId: data.room_id,
+              status: "leave",
+            });
             socket.leave(data.room_id);
-            publish(pubClient, "end_chat_by_astrologer", { message: `User has left the ${data.room_id} chat.`, roomId: data.room_id,astroId:data.astroId, status: "leave" });
+            publish(pubClient, "end_chat_by_astrologer", {
+              message: `User has left the ${data.room_id} chat.`,
+              roomId: data.room_id,
+              astroId: data.astroId,
+              status: "leave",
+            });
           } catch (err) {
             console.error("[Socket Error] complted_chat", err);
           }
         });
 
-      
         socket.on("autodisconnect", async (data) => {
           try {
             console.log("[Socket Event] autodisconnect", data);
             //await changeAutoChatStatus({ session_id: data.room_id,request_status: 4,astroid: data.astro_id });
             let roomId = data.room_id;
-            socket.to(roomId).emit("user_disconnected", { message: "A user has left the chat.", socketId: socket.id, roomId:roomId});
-            publish(pubClient, "astrologer_disconnected", { message: "Auto Disconnect Chat By Astrologer.", socketId: socket.id, roomId:roomId });
+            socket
+              .to(roomId)
+              .emit("user_disconnected", {
+                message: "A user has left the chat.",
+                socketId: socket.id,
+                roomId: roomId,
+              });
+            publish(pubClient, "astrologer_disconnected", {
+              message: "Auto Disconnect Chat By Astrologer.",
+              socketId: socket.id,
+              roomId: roomId,
+            });
             socket.leave(roomId);
           } catch (err) {
             console.error("[Socket Error] disconnect", err);
@@ -287,10 +338,15 @@ async function socketHandler(io, pubClient, subClient) {
         // Logout
         socket.on("logout", (data) => {
           try {
-            const roomBase = data.astro_id ? `astro_${sanitizeHtml(data.astro_id)}` : null;
+            const roomBase = data.astro_id
+              ? `astro_${sanitizeHtml(data.astro_id)}`
+              : null;
             if (!roomBase) return;
             socket.leave(roomBase);
-            publish(pubClient, "logout", { message: "Astrologer has left the chat.", roomid: roomBase });
+            publish(pubClient, "logout", {
+              message: "Astrologer has left the chat.",
+              roomid: roomBase,
+            });
           } catch (err) {
             console.error("[Socket Error] logout", err);
           }
@@ -300,29 +356,34 @@ async function socketHandler(io, pubClient, subClient) {
 
         socket.on("callAcceptedByAstrologer", async (data) => {
           try {
-            publish(pubClient, "callAcceptedByAstrologer", JSON.stringify(data));
+            publish(
+              pubClient,
+              "callAcceptedByAstrologer",
+              data,
+            );
           } catch (err) {
             console.error("[Socket Error] disconnect", err);
           }
         });
 
-         socket.on("answer", async (data) => {
+        socket.on("answer", async (data) => {
           try {
-            publish(pubClient, "answer", JSON.stringify(data));
+            publish(pubClient, "answer", data);
           } catch (err) {
             console.error("[Socket Error] disconnect", err);
           }
         });
-         socket.on("call_ended_by_astrologer", async (data) => {
+        socket.on("call_ended_by_astrologer", async (data) => {
           try {
-            publish(pubClient, "call_ended_by_astrologer", JSON.stringify(data));
+            publish(
+              pubClient,
+              "call_ended_by_astrologer",
+              data,
+            );
           } catch (err) {
             console.error("[Socket Error] disconnect", err);
           }
         });
-
-      
-        
       } catch (err) {
         console.error("[Connection Error]", err);
       }
