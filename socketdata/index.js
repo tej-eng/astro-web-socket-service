@@ -66,6 +66,11 @@ const redisHandlers = (io) => ({
       io.emit("call_ended_by_user", JSON.stringify(data));
     
   },
+  peer_joined: (data) => {
+      io.emit("peer_joined", JSON.stringify(data));
+  },
+
+  
   
 
 
@@ -133,6 +138,7 @@ async function socketHandler(io, pubClient, subClient) {
       "call_start",
       "offer",
       "call_ended_by_user",
+      "peer_joined"
     ];
 
     const handlers = redisHandlers(io);
