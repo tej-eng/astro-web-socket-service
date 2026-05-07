@@ -58,8 +58,8 @@ const redisHandlers = (io) => ({
   },
 
  offer: (data) => {
-  console.log("Offer received for room:", data.room_id, "Data:", data);
-  io.to(data.room_id).emit("offer", data);
+  const roomId = data.room_id || data.roomId;
+  io.to(roomId).emit("offer", data);
 },
   call_ended_by_user: (data) => {
     io.emit("call_ended_by_user", JSON.stringify(data));
@@ -72,9 +72,12 @@ const redisHandlers = (io) => ({
   },
 
  ice_candidate: (data) => {
-  console.log("ICE Candidate received for room:", data.roomId, "Data:", data);
-    io.to(data.roomId).emit("ice-candidate", data);
-  },
+  console.log("ICE Candidate received for room:", data.room_id || data.roomId);
+  const roomId = data.room_id || data.roomId;
+  if (roomId) {
+    io.to(roomId).emit("ice-candidate", data);
+  }
+},
   
 
   messages: (data) => {
