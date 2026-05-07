@@ -64,14 +64,15 @@ const redisHandlers = (io) => ({
   call_ended_by_user: (data) => {
     io.emit("call_ended_by_user", JSON.stringify(data));
   },
-  join_call: (data) => {
-    io.to(data.roomId).emit("join_call", data);
-  },
+  // join_call: (data) => {
+  //   io.to(data.roomId).emit("join_call", data);
+  // },
   peer_joined: (data) => {
     io.to(data.roomId).emit("peer_joined", data);
   },
 
  ice_candidate: (data) => {
+  console.log("ICE Candidate received for room:", data.roomId, "Data:", data);
     io.to(data.roomId).emit("ice-candidate", data);
   },
   
@@ -177,7 +178,7 @@ async function socketHandler(io, pubClient, subClient) {
   "call_ended_by_user",
   "call_ended_by_astrologer",
   "peer_joined",
-  "join_call",
+  //"join_call",
 
     ];
 
@@ -375,6 +376,33 @@ async function socketHandler(io, pubClient, subClient) {
             console.error("[Socket Error] disconnect", err);
           }
         });
+
+    socket.on("join_call", async ({ roomId }) => {
+  try {
+    console.log("📞 ASTROLOGER JOIN CALL");
+    console.log("Room:", roomId);
+    console.log("Socket:", socket.id);
+
+    await socket.join(roomId);
+
+    const clients = await io.in(roomId).fetchSockets();
+
+    console.log(
+      "Clients in room:",
+      clients.map((c) => c.id)
+    );
+
+    // notify both peers
+    if (clients.length >= 2) {
+      io.to(roomId).emit("peer_joined");
+
+      console.log("✅ peer_joined emitted");
+    }
+
+  } catch (err) {
+    console.error("join_call error:", err);
+  }
+});
 
         socket.on("answer", async (data) => {
           try {
