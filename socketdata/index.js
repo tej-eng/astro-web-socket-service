@@ -58,11 +58,7 @@ const redisHandlers = (io) => ({
   },
 
  offer: (data) => {
-  console.log(
-    "📤 Relaying OFFER to room:",
-    data.room_id,
-  );
-
+  console.log("Offer received for room:", data.room_id, "Data:", data);
   io.to(data.room_id).emit("offer", data);
 },
   call_ended_by_user: (data) => {
@@ -74,6 +70,11 @@ const redisHandlers = (io) => ({
   peer_joined: (data) => {
     io.to(data.roomId).emit("peer_joined", data);
   },
+
+ ice_candidate: (data) => {
+    io.to(data.roomId).emit("ice-candidate", data);
+  },
+  
 
   messages: (data) => {
     const parseData = typeof data === "string" ? JSON.parse(data) : data;
@@ -139,6 +140,15 @@ const redisHandlers = (io) => ({
 
   customer_recharge_fail: (data) =>
     io.to(data.roomId).emit("customer_recharge_fail", data),
+
+callAcceptedByAstrologer: (data) => {
+  console.log(
+    "[callAcceptedByAstrologer handler] Emitting to room:",
+    data.roomId,
+    data,
+  );
+  io.emit("callAcceptedByAstrologer", data)},
+
 });
 
 // ===== Main Socket Handler =====
@@ -163,7 +173,7 @@ async function socketHandler(io, pubClient, subClient) {
   "callAcceptedByAstrologer",
   "offer",
   "answer",
-  "ice-candidate",
+  "ice_candidate",
   "call_ended_by_user",
   "call_ended_by_astrologer",
   "peer_joined",
