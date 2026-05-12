@@ -54,6 +54,7 @@ const redisHandlers = (io) => ({
       room_id: data.room_id,
       callerId: data.callerId,
       receiverId: data.receiverId,
+      callTime: data.callTime,
     });
   },
 
