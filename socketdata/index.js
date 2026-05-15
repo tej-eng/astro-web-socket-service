@@ -57,6 +57,16 @@ const redisHandlers = (io) => ({
       callTime: data.callTime,
     });
   },
+    call_requests: (data) => {
+    io.emit("incoming_call", {
+      room_id: data.room_id,
+      callerId: data.user_id,
+      receiverId: data.astro_id,
+      callTime: data.maximum_time,
+    });
+  },
+
+  
 
   offer: (data) => {
     const roomId = data.room_id || data.roomId;
@@ -193,6 +203,7 @@ async function socketHandler(io, pubClient, subClient) {
       "peer_joined",
       "call_cancel_by_user",
       "call_reject_auto",
+      "call_requests"
       
     ];
 
