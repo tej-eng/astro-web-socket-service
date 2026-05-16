@@ -55,6 +55,7 @@ const redisHandlers = (io) => ({
       callerId: data.callerId,
       receiverId: data.receiverId,
       callTime: data.callTime,
+      userName=data.userName,
     });
   },
     call_requests: (data) => {
@@ -63,6 +64,8 @@ const redisHandlers = (io) => ({
       callerId: data.user_id,
       receiverId: data.astro_id,
       callTime: data.maximum_time,
+      userName:data.userName,
+     
     });
   },
 
