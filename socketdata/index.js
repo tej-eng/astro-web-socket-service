@@ -1,8 +1,6 @@
 import { DateTime } from "luxon";
 import sanitizeHtml from "sanitize-html";
 
-// ===== Utility Functions =====
-
 const users = [];
 const requestCooldown = 1000;
 
@@ -55,21 +53,18 @@ const redisHandlers = (io) => ({
       callerId: data.callerId,
       receiverId: data.receiverId,
       callTime: data.callTime,
-      userName:data.userName,
+      userName: data.userName,
     });
   },
-    call_requests: (data) => {
+  call_requests: (data) => {
     io.emit("incoming_call", {
       room_id: data.room_id,
       callerId: data.user_id,
       receiverId: data.astro_id,
       callTime: data.maximum_time,
-      userName:data.userName,
-     
+      userName: data.userName,
     });
   },
-
-  
 
   offer: (data) => {
     const roomId = data.room_id || data.roomId;
@@ -85,9 +80,6 @@ const redisHandlers = (io) => ({
     io.emit("call_reject_auto", JSON.stringify(data));
   },
 
-  // join_call: (data) => {
-  //   io.to(data.roomId).emit("join_call", data);
-  // },
   peer_joined: (data) => {
     io.to(data.roomId).emit("peer_joined", data);
   },
@@ -106,17 +98,12 @@ const redisHandlers = (io) => ({
   messages: (data) => {
     const parseData = typeof data === "string" ? JSON.parse(data) : data;
     if (parseData.sender == "user") {
-      console.log(
-        "[messages handler] Emitting to room (User)aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa:",
-        parseData.room_id,
-      );
       io.to(parseData.room_id).emit("receive_message", parseData);
     } else if (parseData.sender === "Astrologer") {
       console.log(
         "[messages handler] Emitting to room (Astrologer):",
         parseData.room_id,
       );
-      //io.to(data.room_id).emit("receive_message", data);
     } else {
       console.log("[messages handler] Unknown sender:", parseData.sender);
     }
@@ -136,7 +123,6 @@ const redisHandlers = (io) => ({
       data.roomid,
       data,
     );
-    //io.to(data.roomid).emit("roomNotification", data);
     io.emit("chat_started_astrologer", data);
     io.emit("user_conformation_chat", data);
   },
@@ -206,8 +192,7 @@ async function socketHandler(io, pubClient, subClient) {
       "peer_joined",
       "call_cancel_by_user",
       "call_reject_auto",
-      "call_requests"
-      
+      "call_requests",
     ];
 
     const handlers = redisHandlers(io);
@@ -232,7 +217,6 @@ async function socketHandler(io, pubClient, subClient) {
 
     io.on("connection", (socket) => {
       try {
-        // Chat acceptance
         socket.on("chat_accepted_astrologer", (data) => {
           try {
             logEvent("chat_accepted_astrologer", data);
@@ -248,15 +232,10 @@ async function socketHandler(io, pubClient, subClient) {
           }
         });
 
-        // Chat rejection
         socket.on("chat_rejected_astrologer", async (data) => {
           try {
             logEvent("chat_rejected_astrologer", data);
             if (!data.room_id) return;
-            // await chatReject({
-            //   roomId: String(data.room_id),
-            //   astroId: sanitizeHtml(data.astro_id || ""),
-            // });
             publish(pubClient, "chat_status", {
               message: "Your astrologer has rejected your chat request!",
               status: "rejected",
@@ -268,7 +247,6 @@ async function socketHandler(io, pubClient, subClient) {
           }
         });
 
-        // Send message
         socket.on("send_message", async (data) => {
           try {
             let sender = "Astrologer";
@@ -288,7 +266,6 @@ async function socketHandler(io, pubClient, subClient) {
           }
         });
 
-        // Join chat
         socket.on("joinChat", (data) => {
           try {
             logEvent("joinChat", data);
@@ -304,7 +281,6 @@ async function socketHandler(io, pubClient, subClient) {
           }
         });
 
-        // Typing
         socket.on("typing", (data) => {
           try {
             socket.to(data.room_id).emit("typing", {
@@ -326,7 +302,6 @@ async function socketHandler(io, pubClient, subClient) {
         socket.on("complted_chat", async (data) => {
           try {
             logEvent("complted_chat", data);
-            // await comChat({ roomId: data.room_id });
             socket.broadcast.to(data.room_id).emit("complted_chat", {
               message: `User has left the ${data.room_id} chat.`,
               roomId: data.room_id,
@@ -352,7 +327,6 @@ async function socketHandler(io, pubClient, subClient) {
         socket.on("autodisconnect", async (data) => {
           try {
             console.log("[Socket Event] autodisconnect", data);
-            //await changeAutoChatStatus({ session_id: data.room_id,request_status: 4,astroid: data.astro_id });
             let roomId = data.room_id;
             socket.to(roomId).emit("user_disconnected", {
               message: "A user has left the chat.",
@@ -370,7 +344,6 @@ async function socketHandler(io, pubClient, subClient) {
           }
         });
 
-        // Logout
         socket.on("logout", (data) => {
           try {
             const roomBase = data.astro_id
@@ -387,8 +360,6 @@ async function socketHandler(io, pubClient, subClient) {
           }
         });
 
-        //---------------for call-------
-
         socket.on("callAcceptedByAstrologer", async (data) => {
           try {
             publish(pubClient, "callAcceptedByAstrologer", data);
@@ -399,7 +370,7 @@ async function socketHandler(io, pubClient, subClient) {
 
         socket.on("join_call", async ({ roomId }) => {
           try {
-            console.log("📞 ASTROLOGER JOIN CALL");
+            console.log(" ASTROLOGER JOIN CALL");
             console.log("Room:", roomId);
             console.log("Socket:", socket.id);
 
@@ -412,17 +383,13 @@ async function socketHandler(io, pubClient, subClient) {
               clients.map((c) => c.id),
             );
 
-            // notify both peers
             if (clients.length >= 2) {
               io.to(roomId).emit("peer_joined");
-
-              console.log("✅ peer_joined emitted");
             }
           } catch (err) {
             console.error("join_call error:", err);
           }
         });
-
 
         socket.on("answer", async (data) => {
           try {
@@ -439,7 +406,7 @@ async function socketHandler(io, pubClient, subClient) {
           }
         });
 
-         socket.on("call_cancel_by_astrologer", async (data) => {
+        socket.on("call_cancel_by_astrologer", async (data) => {
           try {
             publish(pubClient, "call_cancel_by_astrologer", data);
           } catch (err) {

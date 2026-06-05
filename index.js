@@ -108,10 +108,7 @@ const jwtAuthMiddleware = (socket, next) => {
 ============================== */
 const dhwaniNamespace = io.of("/dhwani-astro");
 dhwaniNamespace.use(jwtAuthMiddleware);
-
-//  PASS redisClient here (IMPORTANT FIX)
 socketHandler(dhwaniNamespace, pubClient, subClient, redisClient);
-
 /* ==============================
    EXPRESS ROUTES
 ============================== */
