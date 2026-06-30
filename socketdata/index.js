@@ -272,6 +272,7 @@ async function socketHandler(io, pubClient, subClient) {
         // Complete chat
         socket.on("complted_chat", async (data) => {
           try {
+            console.log("----------------END CHAT BY ASTROLOGER--:",data);
             logEvent("complted_chat", data);
             socket.broadcast.to(data.room_id).emit("complted_chat", {
               message: `User has left the ${data.room_id} chat.`,
