@@ -85,10 +85,6 @@ const redisHandlers = (io) => ({
   },
 
   ice_candidate: (data) => {
-    console.log(
-      "ICE Candidate received for room:",
-      data.room_id || data.roomId,
-    );
     const roomId = data.room_id || data.roomId;
     if (roomId) {
       io.to(roomId).emit("ice-candidate", data);
@@ -100,39 +96,19 @@ const redisHandlers = (io) => ({
     if (parseData.sender == "user") {
       io.to(parseData.room_id).emit("receive_message", parseData);
     } else if (parseData.sender === "Astrologer") {
-      console.log(
-        "[messages handler] Emitting to room (Astrologer):",
-        parseData.room_id,
-      );
     } else {
-      console.log("[messages handler] Unknown sender:", parseData.sender);
     }
   },
 
   room_notification: (data) => {
-    console.log(
-      "[room_notification handler] Emitting to room:",
-      data.roomid,
-      data,
-    );
     io.to(data.roomid).emit("roomNotification", data);
   },
   userJoinedChat: (data) => {
-    console.log(
-      "[userJoinedChat handler] Emitting to room:",
-      data.roomid,
-      data,
-    );
     io.emit("chat_started_astrologer", data);
     io.emit("user_conformation_chat", data);
   },
 
   user_typing: (data) => {
-    console.log(
-      "[user_typing handler] Emitting typing to room:",
-      data.roomid,
-      data,
-    );
     io.to(data.roomid).emit("typing", data);
   },
 
@@ -155,11 +131,6 @@ const redisHandlers = (io) => ({
     io.to(data.roomId).emit("customer_recharge_fail", data),
 
   callAcceptedByAstrologer: (data) => {
-    console.log(
-      "[callAcceptedByAstrologer handler] Emitting to room:",
-      data.roomId,
-      data,
-    );
     io.emit("callAcceptedByAstrologer", data);
   },
 });
@@ -370,19 +341,9 @@ async function socketHandler(io, pubClient, subClient) {
 
         socket.on("join_call", async ({ roomId }) => {
           try {
-            console.log(" ASTROLOGER JOIN CALL");
-            console.log("Room:", roomId);
-            console.log("Socket:", socket.id);
-
             await socket.join(roomId);
 
             const clients = await io.in(roomId).fetchSockets();
-
-            console.log(
-              "Clients in room:",
-              clients.map((c) => c.id),
-            );
-
             if (clients.length >= 2) {
               io.to(roomId).emit("peer_joined");
             }
