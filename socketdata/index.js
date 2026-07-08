@@ -136,7 +136,7 @@ const redisHandlers = (io) => ({
 });
 
 // ===== Main Socket Handler =====
-async function socketHandler(io, pubClient, subClient) {
+async function socketHandler(io, pubClient, subClient, redisClient) {
   try {
     const channels = [
       "chat_requests",
@@ -201,6 +201,124 @@ async function socketHandler(io, pubClient, subClient) {
           } catch (err) {
             console.error("[Socket Error] chat_accepted_astrologer", err);
           }
+        });
+
+        socket.on("register", async ({ astrologerId, playerId }) => {
+          try {
+            console.log(astrologerId,"------AAAAAAAAAA register---------",playerId);
+            socket.data.astrologerId = astrologerId;
+
+            const key = `presence:astro:${astrologerId}`;
+
+            const presence = await redisClient.get(key);
+             console.log(astrologerId,"------BBBBBBB register---------",presence);
+            let obj = presence ? JSON.parse(presence) : {};
+
+            // If another socket is already connected, disconnect it
+            if (obj.socketId && obj.socketId !== socket.id) {
+              const oldSocket = io.sockets.sockets.get(obj.socketId);
+
+              if (oldSocket) {
+                console.log(
+                  `Disconnecting old socket ${obj.socketId} for astrologer ${astrologerId}`,
+                );
+
+                // Optional: notify old device
+                oldSocket.emit("force_logout", {
+                  message: "Your account has been logged in on another device.",
+                });
+
+                oldSocket.disconnect(true);
+              }
+            }
+
+            obj.socketId = socket.id;
+            obj.online = true;
+            obj.playerId = playerId;
+            obj.appState = "foreground";
+            obj.lastSeen = Date.now();
+
+            await redisClient.set(key, JSON.stringify(obj), {
+              EX: 60,
+            });
+
+            console.log(
+              `Astrologer ${astrologerId} registered with socket ${socket.id}`,
+            );
+          } catch (err) {
+            console.error("Register error:", err);
+          }
+        });
+
+        socket.on("heartbeat", async () => {
+          const astrologerId = socket.data.astrologerId;
+
+          if (!astrologerId) return;
+
+          const key = `presence:astro:${astrologerId}`;
+
+          const presence = await redisClient.get(key);
+
+          if (!presence) return;
+
+          const obj = JSON.parse(presence);
+
+          obj.online = true;
+          obj.lastSeen = Date.now();
+
+          await redisClient.set(key, JSON.stringify(obj), { EX: 60 });
+        });
+
+        socket.on("app_state", async ({ state }) => {
+          const astrologerId = socket.data.astrologerId;
+          console.log("----------CCCCCCCCCCCCC app_state---------",state);
+
+          if (!astrologerId) return;
+
+          const key = `presence:astro:${astrologerId}`;
+
+          const presence = await redisClient.get(key);
+
+          if (!presence) return;
+
+          const obj = JSON.parse(presence);
+
+          obj.appState = state;
+          obj.lastSeen = Date.now();
+
+          await redisClient.set(key, JSON.stringify(obj), { EX: 60 });
+        });
+
+        socket.on("disconnect", () => {
+          console.log("------------DDDDDDDDDDDDDD disconnect--------");
+          const astrologerId = socket.data.astrologerId;
+          console.log("------------DDDDDDDDDDDDDD disconnect------astrologerId--",astrologerId);
+
+          if (!astrologerId) return;
+
+          setTimeout(async () => {
+            const sockets = await io.fetchSockets();
+
+            const exists = sockets.some(
+              (s) => s.data.astrologerId === astrologerId,
+            );
+
+            if (exists) return;
+
+            const key = `presence:astro:${astrologerId}`;
+
+            const presence = await redisClient.get(key);
+
+            if (!presence) return;
+
+            const obj = JSON.parse(presence);
+
+            obj.online = false;
+            obj.socketId = null;
+            obj.lastSeen = Date.now();
+
+            await redisClient.set(key, JSON.stringify(obj), { EX: 60 });
+          }, 30000);
         });
 
         socket.on("chat_rejected_astrologer", async (data) => {
@@ -272,7 +390,7 @@ async function socketHandler(io, pubClient, subClient) {
         // Complete chat
         socket.on("complted_chat", async (data) => {
           try {
-            console.log("----------------END CHAT BY ASTROLOGER--:",data);
+            console.log("----------------END CHAT BY ASTROLOGER--:", data);
             logEvent("complted_chat", data);
             socket.broadcast.to(data.room_id).emit("complted_chat", {
               message: `User has left the ${data.room_id} chat.`,

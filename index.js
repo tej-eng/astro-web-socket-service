@@ -144,3 +144,12 @@ app.get("/", (req, res) => {
 server.listen(port, () => {
   console.log(`Socket Server running on port ${port}`);
 });
+
+
+process.on("SIGINT", async () => {
+    await pubClient.quit();
+    await subClient.quit();
+    await redisClient.quit();
+
+    process.exit(0);
+});
