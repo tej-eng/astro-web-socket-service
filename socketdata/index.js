@@ -231,7 +231,7 @@ async function socketHandler(io, pubClient, subClient, redisClient) {
                 oldSocket.disconnect(true);
               }
             }
-
+           console.log("socketid-----:"+socket.id+"-----playerId------"+playerId);
             obj.socketId = socket.id;
             obj.online = true;
             obj.playerId = playerId;
