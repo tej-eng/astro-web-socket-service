@@ -235,7 +235,7 @@ async function socketHandler(io, pubClient, subClient, redisClient) {
             obj.socketId = socket.id;
             obj.online = true;
             obj.playerId = playerId;
-            obj.appState = "foreground";
+            obj.appState = "background";
             obj.lastSeen = Date.now();
 
             await redisClient.set(key, JSON.stringify(obj), {
