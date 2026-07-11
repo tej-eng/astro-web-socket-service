@@ -214,23 +214,24 @@ async function socketHandler(io, pubClient, subClient, redisClient) {
              console.log(astrologerId,"------BBBBBBB register---------",presence);
             let obj = presence ? JSON.parse(presence) : {};
 
-            // If another socket is already connected, disconnect it
-            if (obj.socketId && obj.socketId !== socket.id) {
-              const oldSocket = io.sockets.sockets.get(obj.socketId);
+            //----- If another socket is already connected, disconnect it---//
 
-              if (oldSocket) {
-                console.log(
-                  `Disconnecting old socket ${obj.socketId} for astrologer ${astrologerId}`,
-                );
+            // if (obj.socketId && obj.socketId !== socket.id) {
+            //   const oldSocket = io.sockets.sockets.get(obj.socketId);
 
-                // Optional: notify old device
-                oldSocket.emit("force_logout", {
-                  message: "Your account has been logged in on another device.",
-                });
+            //   if (oldSocket) {
+            //     console.log(
+            //       `Disconnecting old socket ${obj.socketId} for astrologer ${astrologerId}`,
+            //     );
 
-                oldSocket.disconnect(true);
-              }
-            }
+            //     oldSocket.emit("force_logout", {
+            //       message: "Your account has been logged in on another device.",
+            //     });
+
+            //     oldSocket.disconnect(true);
+            //   }
+            // }
+
            console.log("socketid-----:"+socket.id+"-----playerId------"+playerId);
             obj.socketId = socket.id;
             obj.online = true;
@@ -239,7 +240,7 @@ async function socketHandler(io, pubClient, subClient, redisClient) {
             obj.lastSeen = Date.now();
 
             await redisClient.set(key, JSON.stringify(obj), {
-              EX: 60,
+              EX: 86400,
             });
 
             console.log(
